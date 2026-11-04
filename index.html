@@ -153,7 +153,7 @@ section { display: grid; gap: 14px; }
 .mod-avg .v.lo { color: var(--bad); }
 .mod-avg .promo { display: block; font-size: 12px; color: var(--muted); font-family: var(--font-data); }
 .notes { display: grid; gap: 6px; }
-.note-row { display: grid; grid-template-columns: minmax(0, 1fr) 5.5rem 1.2rem 4.5rem 5.5rem 2rem; gap: 6px; align-items: center; }
+.note-row { display: grid; grid-template-columns: minmax(0, 1fr) 5.5rem 1.2rem 4.5rem 6.5rem 5.5rem 2rem; gap: 6px; align-items: center; }
 .note-row input {
   width: 100%; padding: 5px 8px; border: 1px solid transparent; border-radius: 5px; background: var(--accent-soft);
 }
@@ -163,6 +163,9 @@ section { display: grid; gap: 14px; }
 .note-row .sep, .note-row .cl { font-size: 13px; color: var(--muted); }
 .note-row .sep { text-align: center; }
 .note-row .cl { text-align: right; }
+.s20 { font-family: var(--font-data); font-size: 13px; color: var(--accent); white-space: nowrap; }
+.s20.lo { color: var(--bad); }
+.preview { margin: 0; font-size: 14px; color: var(--muted); min-height: 1.4em; }
 .del { width: 2rem; height: 2rem; border: 0; background: transparent; color: var(--muted); border-radius: 5px; cursor: pointer; font-size: 18px; line-height: 1; }
 .del:hover { color: var(--bad); background: var(--accent-soft); }
 .empty { color: var(--muted); font-style: italic; font-size: 14px; margin: 0; }
@@ -216,6 +219,8 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
 }
 @media (max-width: 480px) {
   .note-row { grid-template-columns: minmax(0, 1fr) 4.2rem 1rem 3.4rem 4.6rem 2rem; gap: 4px; }
+  .note-row .s20 { grid-column: 1 / -1; grid-row: 2; text-align: right; padding-right: 2.4rem; }
+  .note-row .s20:empty { display: none; }
   .note-row .cl { font-size: 11px; }
 }
 </style>
@@ -260,6 +265,9 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
   const parse = s => { const v = parseFloat(String(s).replace(",", ".").trim()); return Number.isFinite(v) ? v : null; };
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const code = m => m.ref.split(".").pop();
+  // Conversion sur 20 : note / barème × 20
+  const sur20 = (n, sur) => n != null && sur > 0 ? n / sur * 20 : null;
+  const s20 = (n, sur) => { const v = sur20(n, sur); return `<span class="s20 ${v != null && v < 10 ? "lo" : ""}">${v == null || sur === 20 ? "" : `= ${fmt(v)}/20`}</span>`; };
 
   function moyModule(m) {
     const ns = m.notes.filter(n => n.n != null && n.sur > 0 && n.coef > 0);
@@ -301,6 +309,7 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
           <input id="e-${mi}-${i}-n" class="num" data-m="${mi}" data-i="${i}" data-k="n" value="${n.n == null ? "" : fmtN(n.n)}" inputmode="decimal" aria-label="Note">
           <span class="sep">/</span>
           <input id="e-${mi}-${i}-sur" class="num" data-m="${mi}" data-i="${i}" data-k="sur" value="${fmtN(n.sur)}" inputmode="decimal" aria-label="Barème">
+          ${s20(n.n, n.sur)}
           <span class="cl">coef <input id="e-${mi}-${i}-coef" class="num" style="width:2.6rem;display:inline-block" data-m="${mi}" data-i="${i}" data-k="coef" value="${fmtN(n.coef)}" inputmode="decimal" aria-label="Coefficient"></span>
           <button class="del" type="button" data-del="${mi}-${i}" title="Supprimer cette note" aria-label="Supprimer la note ${esc(n.t)}">×</button>
         </div>`).join("");
@@ -320,6 +329,7 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
               <input id="ia-n" class="num" placeholder="Note" inputmode="decimal" aria-label="Note" autocomplete="off">
               <span class="sep">/</span>
               <input id="ia-sur" class="num" value="20" inputmode="decimal" aria-label="Barème">
+              <span class="s20" id="ia-s20" aria-live="polite"></span>
               <span class="cl">coef <input id="ia-coef" class="num" style="width:2.6rem;display:inline-block" value="1" inputmode="decimal" aria-label="Coefficient"></span>
               <span></span>
             </div>
@@ -339,6 +349,7 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
           <div class="field"><label for="add-sur">Sur</label><input id="add-sur" inputmode="decimal" value="20"></div>
           <div class="field"><label for="add-coef">Coef.</label><input id="add-coef" inputmode="decimal" value="1"></div>
           <button class="btn" type="submit">Ajouter</button>
+          <p class="preview" id="add-s20" aria-live="polite" style="grid-column: 1 / -1"></p>
         </form>
         <p class="msg ${message.err ? "err" : ""}" id="msg" aria-live="polite">${message.err && ajoutOuvert != null ? "" : esc(message.text)}${message.undo ? ' <button type="button" class="linkbtn" id="undo">Annuler</button>' : ""}</p>
       </section>
@@ -491,7 +502,7 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
       if (coef == null || coef <= 0) { setMsg("Le coefficient doit être un nombre positif, par exemple 1.", true); return keep()("ia-coef"); }
       data.modules[mi].notes.push({ t, n, sur, coef });
       save(); ajoutOuvert = null;
-      setMsg(`Ajouté : ${fmtN(n)}/${fmtN(sur)} (coef ${fmtN(coef)}) en ${data.modules[mi].nom}.`);
+      setMsg(`Ajouté : ${fmtN(n)}/${fmtN(sur)}${sur === 20 ? "" : `, soit ${fmt(n / sur * 20)}/20`} (coef ${fmtN(coef)}) en ${data.modules[mi].nom}.`);
       render("plus-" + mi);
       return;
     }
@@ -509,7 +520,7 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
     if (coef == null || coef <= 0) { setMsg("Le coefficient doit être un nombre positif, par exemple 1.", true); return render("add-coef"); }
     data.modules[mi].notes.push({ t, n, sur, coef });
     save();
-    setMsg(`Ajouté : ${fmtN(n)}/${fmtN(sur)} en ${data.modules[mi].nom}.`);
+    setMsg(`Ajouté : ${fmtN(n)}/${fmtN(sur)}${sur === 20 ? "" : `, soit ${fmt(n / sur * 20)}/20`} en ${data.modules[mi].nom}.`);
     render("add-titre");
   });
 
@@ -575,6 +586,17 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
       render();
     };
     r.readAsText(e.target.files[0]);
+  });
+
+  // Aperçu en direct de la note ramenée sur 20 pendant la saisie
+  view.addEventListener("input", e => {
+    const pairs = { "ia-n": ["ia-n", "ia-sur", "ia-s20"], "ia-sur": ["ia-n", "ia-sur", "ia-s20"], "add-note": ["add-note", "add-sur", "add-s20"], "add-sur": ["add-note", "add-sur", "add-s20"] };
+    const pr = pairs[e.target.id]; if (!pr) return;
+    const n = parse(document.getElementById(pr[0]).value), sur = parse(document.getElementById(pr[1]).value);
+    const v = n != null && sur > 0 && n <= sur ? sur20(n, sur) : null;
+    const out = document.getElementById(pr[2]);
+    out.textContent = v == null || sur === 20 ? "" : (pr[2] === "add-s20" ? `Soit ${fmt(v)}/20 dans la moyenne.` : `= ${fmt(v)}/20`);
+    out.classList.toggle("lo", v != null && v < 10 && pr[2] !== "add-s20");
   });
 
   window.addEventListener("hashchange", () => render());
