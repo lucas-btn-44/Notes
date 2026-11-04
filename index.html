@@ -21,7 +21,7 @@ const DEFAUT = {
   formation: "Icam Vendée · A2 apprentissage · promo 2030",
   semestre: "Semestre 1 – 2026/2027",
   modules: [
-    { ref: "A2.CRSA.HUM.COM",   nom: "Communication",               coef: 6,    notes: [] },
+    { ref: "A2.CRSA.HUM.COM",   nom: "Culture générale et expression", coef: 6, notes: [] },
     { ref: "A2.CRSA.HUM.FH",    nom: "Formation Humaine",           coef: 6,    notes: [] },
     { ref: "A2.CRSA.GM",        nom: "Génie mécanique",             coef: 18,   notes: [] },
     { ref: "A2.CRSA.GE",        nom: "Génie électrique",            coef: 18,   notes: [] },
@@ -163,6 +163,17 @@ section { display: grid; gap: 14px; }
 .del { width: 2rem; height: 2rem; border: 0; background: transparent; color: var(--muted); border-radius: 5px; cursor: pointer; font-size: 18px; line-height: 1; }
 .del:hover { color: var(--bad); background: var(--accent-soft); }
 .empty { color: var(--muted); font-style: italic; font-size: 14px; margin: 0; }
+.title-row { display: flex; align-items: center; gap: 10px; }
+.plus {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--accent);
+  background: transparent; color: var(--accent); font-size: 18px; font-weight: 600; line-height: 1; cursor: pointer;
+  display: inline-grid; place-items: center; padding: 0;
+}
+.plus:hover, .plus[aria-expanded="true"] { background: var(--accent); color: var(--paper); }
+.new-note { display: grid; gap: 8px; padding: 10px; border: 1px dashed var(--accent); border-radius: 8px; }
+.new-note .note-row input { background: var(--surface); border-color: var(--rule-strong); }
+.new-actions { display: flex; gap: 14px; align-items: center; }
+.btn.small { padding: 6px 12px; font-size: 14px; }
 
 .tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .tools .hint { flex-basis: 100%; }
@@ -231,6 +242,8 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
   let data;
   try { data = JSON.parse(localStorage.getItem(CLE)); } catch (e) {}
   if (!data || !Array.isArray(data.modules)) data = copie(DEFAUT);
+  // Les noms des modules suivent toujours ceux du fichier (ex. un module renommé)
+  data.modules.forEach(m => { const d = DEFAUT.modules.find(x => x.ref === m.ref); if (d) m.nom = d.nom; });
   const save = () => { try { localStorage.setItem(CLE, JSON.stringify(data)); } catch (e) {} };
 
   const fmt = (x, dec = 2) => x == null ? "—" : x.toLocaleString("fr-FR", { minimumFractionDigits: dec, maximumFractionDigits: dec });
@@ -266,6 +279,7 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
   let dernierSupprime = null;
   let confirmReset = false;
   let dernierModule = 0;
+  let ajoutOuvert = null; // index du module dont le petit formulaire « + » est ouvert
 
   function renderNotes() {
     const opts = data.modules.map((m, i) => `<option value="${i}" ${i === dernierModule ? "selected" : ""}>${esc(m.nom)}</option>`).join("");
@@ -284,10 +298,25 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
       return `
         <article class="mod" id="m-${code(m)}">
           <div class="mod-head">
-            <div><div class="ref">${esc(m.ref)}</div><h3>${esc(m.nom)}</h3><div class="meta">coef. ${fmtN(m.coef)} · ${m.notes.length} note${m.notes.length > 1 ? "s" : ""}</div></div>
+            <div><div class="ref">${esc(m.ref)}</div>
+              <div class="title-row"><h3>${esc(m.nom)}</h3><button class="plus" type="button" id="plus-${mi}" data-plus="${mi}" aria-expanded="${ajoutOuvert === mi}" title="Ajouter une note" aria-label="Ajouter une note en ${esc(m.nom)}">+</button></div>
+              <div class="meta">coef. ${fmtN(m.coef)} · ${m.notes.length} note${m.notes.length > 1 ? "s" : ""}</div></div>
             <div class="mod-avg"><span class="v ${v == null ? "none" : v < 10 ? "lo" : ""}">${v == null ? "—" : fmt(v)}</span>${promo ? `<span class="promo">${promo}</span>` : ""}</div>
           </div>
-          ${m.notes.length ? `<div class="notes">${rows}</div>` : '<p class="empty">Pas encore de note.</p>'}
+          ${m.notes.length ? `<div class="notes">${rows}</div>` : ajoutOuvert === mi ? "" : '<p class="empty">Pas encore de note.</p>'}
+          ${ajoutOuvert === mi ? `
+          <form class="new-note" data-m="${mi}" novalidate>
+            <div class="note-row">
+              <input id="ia-t" placeholder="Intitulé (ex. DS 2)" aria-label="Intitulé" autocomplete="off">
+              <input id="ia-n" class="num" placeholder="Note" inputmode="decimal" aria-label="Note" autocomplete="off">
+              <span class="sep">/</span>
+              <input id="ia-sur" class="num" value="20" inputmode="decimal" aria-label="Barème">
+              <span class="cl">coef <input id="ia-coef" class="num" style="width:2.6rem;display:inline-block" value="1" inputmode="decimal" aria-label="Coefficient"></span>
+              <span></span>
+            </div>
+            ${message.err ? `<p class="msg err">${esc(message.text)}</p>` : ""}
+            <div class="new-actions"><button class="btn small" type="submit">Ajouter la note</button><button class="linkbtn" type="button" data-cancel="1">Annuler</button></div>
+          </form>` : ""}
         </article>`;
     }).join("");
 
@@ -302,7 +331,7 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
           <div class="field"><label for="add-coef">Coef.</label><input id="add-coef" inputmode="decimal" value="1"></div>
           <button class="btn" type="submit">Ajouter</button>
         </form>
-        <p class="msg ${message.err ? "err" : ""}" id="msg" aria-live="polite">${esc(message.text)}${message.undo ? ' <button type="button" class="linkbtn" id="undo">Annuler</button>' : ""}</p>
+        <p class="msg ${message.err ? "err" : ""}" id="msg" aria-live="polite">${message.err && ajoutOuvert != null ? "" : esc(message.text)}${message.undo ? ' <button type="button" class="linkbtn" id="undo">Annuler</button>' : ""}</p>
       </section>
       <section aria-label="Modules">
         <p class="hint">Pour corriger une note, clique dessus et modifie-la directement. Tout est enregistré dans ce navigateur.</p>
@@ -420,6 +449,24 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
   const setMsg = (text, err = false, undo = false) => { message = { text, err, undo }; };
 
   view.addEventListener("submit", e => {
+    if (e.target.classList.contains("new-note")) {
+      e.preventDefault();
+      const mi = +e.target.dataset.m;
+      const t = document.getElementById("ia-t").value.trim() || "Note";
+      const n = parse(document.getElementById("ia-n").value);
+      const sur = parse(document.getElementById("ia-sur").value);
+      const coef = parse(document.getElementById("ia-coef").value);
+      const keep = () => { const vals = ["ia-t", "ia-n", "ia-sur", "ia-coef"].map(id => document.getElementById(id).value); return id => { render(id); ["ia-t", "ia-n", "ia-sur", "ia-coef"].forEach((k, j) => { const el = document.getElementById(k); if (el) el.value = vals[j]; }); document.getElementById(id).focus(); }; };
+      if (n == null) { setMsg("Entre une note, par exemple 14,5.", true); return keep()("ia-n"); }
+      if (!sur || sur <= 0) { setMsg("Le barème doit être un nombre positif, par exemple 20.", true); return keep()("ia-sur"); }
+      if (n < 0 || n > sur) { setMsg(`La note doit être comprise entre 0 et ${fmtN(sur)}.`, true); return keep()("ia-n"); }
+      if (coef == null || coef <= 0) { setMsg("Le coefficient doit être un nombre positif, par exemple 1.", true); return keep()("ia-coef"); }
+      data.modules[mi].notes.push({ t, n, sur, coef });
+      save(); ajoutOuvert = null;
+      setMsg(`Ajouté : ${fmtN(n)}/${fmtN(sur)} (coef ${fmtN(coef)}) en ${data.modules[mi].nom}.`);
+      render("plus-" + mi);
+      return;
+    }
     if (e.target.id !== "form-add") return;
     e.preventDefault();
     const mi = +document.getElementById("add-module").value;
@@ -454,6 +501,14 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule)
   });
 
   view.addEventListener("click", e => {
+    const plus = e.target.closest("[data-plus]");
+    if (plus) {
+      const mi = +plus.dataset.plus;
+      ajoutOuvert = ajoutOuvert === mi ? null : mi; setMsg("");
+      render(ajoutOuvert === mi ? "ia-t" : "plus-" + mi);
+      return;
+    }
+    if (e.target.closest("[data-cancel]")) { const mi = ajoutOuvert; ajoutOuvert = null; setMsg(""); render("plus-" + mi); return; }
     const del = e.target.closest("[data-del]");
     if (del) {
       const [mi, i] = del.dataset.del.split("-").map(Number);
