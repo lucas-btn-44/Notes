@@ -5,6 +5,11 @@ moyenne générale du semestre, modules dans l'ordre du portail, saisie des note
 courbe et graphique circulaire.
 
 - Tout le site tient dans `index.html`.
+- Chaque matière a un bouton **+** pour ajouter une note avec son barème et son coefficient.
+- Une note qui n'est pas sur 20 (sur 30, sur 15…) est affichée avec son équivalent sur 20,
+  et c'est cette valeur qui compte dans les moyennes.
+- L'onglet Graphiques montre les moyennes par matière (avec le min et le max de la promo)
+  et un radar par matière.
 - Les notes de départ (bulletin du 04/11/2026) sont dans l'objet `DEFAUT` en haut du fichier.
 - Les notes ajoutées sur le site sont enregistrées dans le navigateur. Le bouton
   « Exporter mes notes » les sauvegarde dans un fichier `mes-notes.json`, que
