@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mes notes de Lucas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script>
+/* =====================================================================
+   NOTES DE DÉPART (bulletin du semestre 1, édité le 04/11/2026).
+   Le site enregistre ensuite tes saisies dans ton navigateur : tu n'as
+   pas besoin de modifier ce fichier pour ajouter des notes.
+   Un module : ref, nom, coef (coefficient du bulletin),
+   promo { moy, min, max } (facultatif), notes [ { t, n, sur, coef } ].
+   ===================================================================== */
+const DEFAUT = {
+  eleve: "Lucas Boutin",
+  formation: "Icam Vendée · A2 apprentissage · promo 2030",
+  semestre: "Semestre 1 – 2026/2027",
+  modules: [
+    { ref: "A2.CRSA.HUM.COM",   nom: "Communication",               coef: 6,    notes: [] },
+    { ref: "A2.CRSA.HUM.FH",    nom: "Formation Humaine",           coef: 6,    notes: [] },
+    { ref: "A2.CRSA.GM",        nom: "Génie mécanique",             coef: 18,   notes: [] },
+    { ref: "A2.CRSA.GE",        nom: "Génie électrique",            coef: 18,   notes: [] },
+    { ref: "A2.CRSA.HUM.LV",    nom: "Langues Vivantes",            coef: 10,   promo: { moy: 7.30, min: 0, max: 18.70 },
+      notes: [ { t: "Anglais", n: 15.30, sur: 20, coef: 1 } ] },
+    { ref: "A2.CRSA.MIA.MATHS", nom: "Mathématiques",               coef: 12.5, notes: [] },
+    { ref: "A2.CRSA.MEO.GI",    nom: "Organisation industrielle",   coef: 5,    promo: { moy: 15.80, min: 13, max: 18 },
+      notes: [ { t: "Organisation industrielle", n: 14, sur: 20, coef: 1 } ] },
+    { ref: "A2.CRSA.PPR",       nom: "Projet",                      coef: 9,    notes: [] },
+    { ref: "A2.CRSA.MIA.PHY",   nom: "Sciences physiques",          coef: 12.5, promo: { moy: 10.71, min: 1.67, max: 20 }, notes: [] },
+    { ref: "A2.CRSA.MEO.VE",    nom: "Vie et gestion d'entreprise", coef: 3,    notes: [] }
+  ]
+};
+</script>
+<style>
+/* Layout : page de cahier (marge rose, lignes bleues) ; en-tête avec la moyenne du semestre, deux onglets, modules l'un après l'autre dans l'ordre du portail. */
+:root {
+  --paper: #fafbfe;
+  --surface: #ffffff;
+  --ink: #181d3a;
+  --muted: #5b6283;
+  --rule: #dfe4f2;
+  --rule-strong: #c4cbe3;
+  --margin: #e0718a;
+  --accent: #2a3dbf;
+  --accent-soft: #e8ebfb;
+  --bad: #c3301d;
+  --good: #1d7650;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+  --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #11142a; --surface: #181c36; --ink: #e9ebf7; --muted: #9ba1c5;
+    --rule: #252a4a; --rule-strong: #363c66; --margin: #c25a75;
+    --accent: #8d9bff; --accent-soft: #232a58; --bad: #ff7d69; --good: #5ccf98;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #11142a; --surface: #181c36; --ink: #e9ebf7; --muted: #9ba1c5;
+  --rule: #252a4a; --rule-strong: #363c66; --margin: #c25a75;
+  --accent: #8d9bff; --accent-soft: #232a58; --bad: #ff7d69; --good: #5ccf98;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 16px/1.5 var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 48px;
+}
+.wrap { max-width: 900px; margin: 0 auto; display: grid; gap: 32px; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+.num { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+/* En-tête */
+.head {
+  position: relative; padding: 28px 0 20px 28px; display: grid; gap: 16px;
+  background-image: repeating-linear-gradient(to bottom, transparent 0 31px, var(--rule) 31px 32px);
+}
+.head::before { content: ""; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: var(--margin); opacity: .7; }
+.head h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.05; }
+.who { color: var(--muted); }
+.general { display: grid; gap: 2px; }
+.general .big { font-family: var(--font-data); font-size: clamp(46px, 10vw, 68px); font-weight: 500; line-height: 1; color: var(--accent); }
+.general .big small { font-size: .36em; color: var(--muted); margin-left: 4px; }
+.general .sub { font-size: 14px; color: var(--muted); }
+
+/* Onglets */
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--rule-strong); }
+.tabs a {
+  padding: 10px 16px; text-decoration: none; font-weight: 600; color: var(--muted);
+  border-bottom: 3px solid transparent; margin-bottom: -1px;
+}
+.tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tabs a:hover { color: var(--ink); }
+
+section { display: grid; gap: 14px; }
+.hint { font-size: 14px; color: var(--muted); margin: 0; }
+
+/* Formulaire d'ajout */
+.add { background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 10px; padding: 16px; }
+.add h2 { font-size: 20px; }
+.add form { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 2fr) repeat(3, minmax(0, 0.8fr)) auto; gap: 10px; align-items: end; }
+.field { display: grid; gap: 4px; min-width: 0; }
+.field label { font-size: 13px; color: var(--muted); font-weight: 600; }
+.field input, .field select {
+  width: 100%; padding: 8px 10px; border: 1px solid var(--rule-strong); border-radius: 6px; background: var(--paper);
+}
+.btn {
+  padding: 9px 16px; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: var(--paper);
+  font-weight: 600; cursor: pointer;
+}
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn.danger { border-color: var(--bad); color: var(--bad); background: transparent; }
+.btn:hover { filter: brightness(1.08); }
+.msg { min-height: 1.5em; font-size: 14px; margin: 0; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.msg.err { color: var(--bad); }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--accent); font-weight: 600; cursor: pointer; text-decoration: underline; }
+
+/* Modules */
+.modules { display: grid; gap: 0; border-top: 1px solid var(--rule-strong); }
+.mod { padding: 16px 4px; border-bottom: 1px solid var(--rule); display: grid; gap: 10px; }
+.mod-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.mod-head > div { min-width: 0; }
+.mod .ref { font-family: var(--font-data); font-size: 12px; color: var(--muted); }
+.mod h3 { font-size: 19px; }
+.mod .meta { font-size: 13px; color: var(--muted); }
+.mod-avg { text-align: right; flex-shrink: 0; }
+.mod-avg .v { font-family: var(--font-data); font-size: 26px; font-weight: 500; line-height: 1.1; }
+.mod-avg .v.none { color: var(--muted); font-size: 20px; }
+.mod-avg .v.lo { color: var(--bad); }
+.mod-avg .promo { display: block; font-size: 12px; color: var(--muted); font-family: var(--font-data); }
+.notes { display: grid; gap: 6px; }
+.note-row { display: grid; grid-template-columns: minmax(0, 1fr) 5.5rem 1.2rem 4.5rem 5.5rem 2rem; gap: 6px; align-items: center; }
+.note-row input {
+  width: 100%; padding: 5px 8px; border: 1px solid transparent; border-radius: 5px; background: var(--accent-soft);
+}
+.note-row input:hover { border-color: var(--rule-strong); }
+.note-row input:focus { border-color: var(--accent); background: var(--surface); outline: none; }
+.note-row input.num { text-align: right; }
+.note-row .sep, .note-row .cl { font-size: 13px; color: var(--muted); }
+.note-row .sep { text-align: center; }
+.note-row .cl { text-align: right; }
+.del { width: 2rem; height: 2rem; border: 0; background: transparent; color: var(--muted); border-radius: 5px; cursor: pointer; font-size: 18px; line-height: 1; }
+.del:hover { color: var(--bad); background: var(--accent-soft); }
+.empty { color: var(--muted); font-style: italic; font-size: 14px; margin: 0; }
+
+.tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.tools .hint { flex-basis: 100%; }
+
+/* Graphiques */
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; display: grid; gap: 12px; }
+.card h2 { font-size: 20px; }
+.card svg { display: block; width: 100%; height: auto; overflow: visible; }
+.card svg text { fill: var(--muted); font-family: var(--font-data); font-size: 11px; }
+.card svg .val { fill: var(--ink); font-size: 12px; font-weight: 500; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw-line { width: 18px; height: 0; border-top: 2px solid; }
+.sw-dot { width: 10px; height: 10px; border-radius: 50%; }
+.pie-wrap { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 24px; align-items: center; }
+.pie-legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.pie-legend li { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.pie-legend .sw { width: 12px; height: 12px; border-radius: 3px; }
+.pie-legend .v { font-family: var(--font-data); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--rule); padding-top: 16px; }
+
+@media (max-width: 720px) {
+  .add form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .add form .f-module, .add form .f-titre { grid-column: 1 / -1; }
+  .add form .btn { grid-column: 1 / -1; }
+  .pie-wrap { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  .pie-wrap svg { max-width: 280px; }
+  .pie-legend { width: 100%; }
+}
+@media (max-width: 480px) {
+  .note-row { grid-template-columns: minmax(0, 1fr) 4.2rem 1rem 3.4rem 4.6rem 2rem; gap: 4px; }
+  .note-row .cl { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="head">
+    <div>
+      <h1>Mes notes</h1>
+      <div class="who" id="who"></div>
+    </div>
+    <div class="general">
+      <span class="label" id="sem-label"></span>
+      <span class="big" id="general"></span>
+      <span class="sub" id="general-sub"></span>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Onglets">
+    <a href="#notes" id="tab-notes">Notes</a>
+    <a href="#graphiques" id="tab-graphiques">Graphiques</a>
+  </nav>
+
+  <main id="view"></main>
+
+  <footer>Calcul : chaque note est ramenée sur 20, la moyenne d'un module tient compte du coefficient de chaque note, puis la moyenne du semestre tient compte du coefficient de chaque module. Les modules sans note ne comptent pas.</footer>
+</div>
+
+<script>
+(() => {
+  const CLE = "mes-notes-icam-v1";
+  const copie = o => JSON.parse(JSON.stringify(o));
+  let data;
+  try { data = JSON.parse(localStorage.getItem(CLE)); } catch (e) {}
+  if (!data || !Array.isArray(data.modules)) data = copie(DEFAUT);
+  const save = () => { try { localStorage.setItem(CLE, JSON.stringify(data)); } catch (e) {} };
+
+  const fmt = (x, dec = 2) => x == null ? "—" : x.toLocaleString("fr-FR", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  const fmtN = x => x.toLocaleString("fr-FR", { maximumFractionDigits: 2 });
+  const parse = s => { const v = parseFloat(String(s).replace(",", ".").trim()); return Number.isFinite(v) ? v : null; };
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const code = m => m.ref.split(".").pop();
+
+  function moyModule(m) {
+    const ns = m.notes.filter(n => n.n != null && n.sur > 0 && n.coef > 0);
+    const c = ns.reduce((s, n) => s + n.coef, 0);
+    return c ? ns.reduce((s, n) => s + n.n / n.sur * 20 * n.coef, 0) / c : null;
+  }
+  function moyGenerale() {
+    let s = 0, c = 0;
+    data.modules.forEach(m => { const v = moyModule(m); if (v != null) { s += v * m.coef; c += m.coef; } });
+    return { v: c ? s / c : null, coefs: c, total: data.modules.reduce((s, m) => s + m.coef, 0), nb: data.modules.filter(m => moyModule(m) != null).length };
+  }
+
+  // ---------- En-tête ----------
+  function renderHead() {
+    document.getElementById("who").textContent = `${data.eleve} · ${data.formation}`;
+    document.getElementById("sem-label").textContent = `Moyenne générale · ${data.semestre}`;
+    const g = moyGenerale();
+    document.getElementById("general").innerHTML = g.v == null ? "—" : `${fmt(g.v)}<small>/20</small>`;
+    document.getElementById("general-sub").textContent = g.nb
+      ? `Calculée sur ${g.nb} module${g.nb > 1 ? "s" : ""} noté${g.nb > 1 ? "s" : ""} sur ${data.modules.length} (coefficients ${fmtN(g.coefs)} sur ${fmtN(g.total)})`
+      : "Aucune note saisie pour l'instant";
+  }
+
+  // ---------- Onglet Notes ----------
+  let message = { text: "", err: false, undo: false };
+  let dernierSupprime = null;
+  let confirmReset = false;
+  let dernierModule = 0;
+
+  function renderNotes() {
+    const opts = data.modules.map((m, i) => `<option value="${i}" ${i === dernierModule ? "selected" : ""}>${esc(m.nom)}</option>`).join("");
+    const mods = data.modules.map((m, mi) => {
+      const v = moyModule(m);
+      const promo = m.promo ? `Promo ${fmt(m.promo.moy)} · min ${fmt(m.promo.min)} · max ${fmt(m.promo.max)}` : "";
+      const rows = m.notes.map((n, i) => `
+        <div class="note-row">
+          <input id="e-${mi}-${i}-t" data-m="${mi}" data-i="${i}" data-k="t" value="${esc(n.t)}" aria-label="Intitulé">
+          <input id="e-${mi}-${i}-n" class="num" data-m="${mi}" data-i="${i}" data-k="n" value="${n.n == null ? "" : fmtN(n.n)}" inputmode="decimal" aria-label="Note">
+          <span class="sep">/</span>
+          <input id="e-${mi}-${i}-sur" class="num" data-m="${mi}" data-i="${i}" data-k="sur" value="${fmtN(n.sur)}" inputmode="decimal" aria-label="Barème">
+          <span class="cl">coef <input id="e-${mi}-${i}-coef" class="num" style="width:2.6rem;display:inline-block" data-m="${mi}" data-i="${i}" data-k="coef" value="${fmtN(n.coef)}" inputmode="decimal" aria-label="Coefficient"></span>
+          <button class="del" type="button" data-del="${mi}-${i}" title="Supprimer cette note" aria-label="Supprimer la note ${esc(n.t)}">×</button>
+        </div>`).join("");
+      return `
+        <article class="mod" id="m-${code(m)}">
+          <div class="mod-head">
+            <div><div class="ref">${esc(m.ref)}</div><h3>${esc(m.nom)}</h3><div class="meta">coef. ${fmtN(m.coef)} · ${m.notes.length} note${m.notes.length > 1 ? "s" : ""}</div></div>
+            <div class="mod-avg"><span class="v ${v == null ? "none" : v < 10 ? "lo" : ""}">${v == null ? "—" : fmt(v)}</span>${promo ? `<span class="promo">${promo}</span>` : ""}</div>
+          </div>
+          ${m.notes.length ? `<div class="notes">${rows}</div>` : '<p class="empty">Pas encore de note.</p>'}
+        </article>`;
+    }).join("");
+
+    return `
+      <section class="add" aria-labelledby="h-add">
+        <h2 id="h-add">Ajouter une note</h2>
+        <form id="form-add" novalidate>
+          <div class="field f-module"><label for="add-module">Module</label><select id="add-module">${opts}</select></div>
+          <div class="field f-titre"><label for="add-titre">Intitulé</label><input id="add-titre" placeholder="Ex. Devoir surveillé 1" autocomplete="off"></div>
+          <div class="field"><label for="add-note">Note</label><input id="add-note" inputmode="decimal" placeholder="14,5" autocomplete="off"></div>
+          <div class="field"><label for="add-sur">Sur</label><input id="add-sur" inputmode="decimal" value="20"></div>
+          <div class="field"><label for="add-coef">Coef.</label><input id="add-coef" inputmode="decimal" value="1"></div>
+          <button class="btn" type="submit">Ajouter</button>
+        </form>
+        <p class="msg ${message.err ? "err" : ""}" id="msg" aria-live="polite">${esc(message.text)}${message.undo ? ' <button type="button" class="linkbtn" id="undo">Annuler</button>' : ""}</p>
+      </section>
+      <section aria-label="Modules">
+        <p class="hint">Pour corriger une note, clique dessus et modifie-la directement. Tout est enregistré dans ce navigateur.</p>
+        <div class="modules">${mods}</div>
+      </section>
+      <section aria-label="Sauvegarde">
+        <div class="tools">
+          <p class="hint">Les notes restent sur cet appareil. Exporte-les pour les garder ou les ouvrir sur un autre appareil.</p>
+          <button class="btn ghost" type="button" id="export">Exporter mes notes</button>
+          <button class="btn ghost" type="button" id="import">Importer un fichier</button>
+          <input type="file" id="import-file" accept="application/json,.json" hidden>
+          <button class="btn danger" type="button" id="reset">${confirmReset ? "Confirmer : tout effacer ?" : "Revenir aux notes du bulletin"}</button>
+        </div>
+      </section>`;
+  }
+
+  // ---------- Onglet Graphiques ----------
+  const PIE_SLOTS = 8;
+  function lineChart() {
+    const mods = data.modules;
+    const W = 680, H = 300, L = 36, R = 12, T = 16, B = 44;
+    const step = (W - L - R) / mods.length;
+    const X = i => L + step * (i + 0.5);
+    const Y = v => T + (1 - v / 20) * (H - T - B);
+    let g = "";
+    [0, 5, 10, 15, 20].forEach(v => {
+      g += `<line x1="${L}" x2="${W - R}" y1="${Y(v)}" y2="${Y(v)}" stroke="${v === 0 ? "var(--rule-strong)" : "var(--rule)"}" stroke-width="1"/>` +
+           `<text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`;
+    });
+    g += `<line x1="${L}" x2="${L}" y1="${T}" y2="${H - B}" stroke="var(--rule-strong)" stroke-width="1"/>`;
+    mods.forEach((m, i) => {
+      g += `<line x1="${X(i)}" x2="${X(i)}" y1="${H - B}" y2="${H - B + 4}" stroke="var(--rule-strong)"/>` +
+           `<text x="${X(i)}" y="${H - B + 18}" text-anchor="middle">${code(m)}</text>`;
+    });
+    const serie = (vals, color, dash, labels) => {
+      const pts = vals.map((v, i) => v == null ? null : { x: X(i), y: Y(v), v, i }).filter(Boolean);
+      let s = "";
+      if (pts.length > 1) s += `<path d="${pts.map((p, k) => `${k ? "L" : "M"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join("")}" fill="none" stroke="${color}" stroke-width="2" ${dash ? 'stroke-dasharray="5 4"' : ""} stroke-linejoin="round"/>`;
+      pts.forEach(p => {
+        s += `<circle cx="${p.x}" cy="${p.y}" r="5" fill="${color}" stroke="var(--surface)" stroke-width="2"><title>${esc(mods[p.i].nom)} : ${fmt(p.v)}/20</title></circle>`;
+        if (labels) {
+          const pr = mods[p.i].promo ? mods[p.i].promo.moy : null;
+          const below = pr != null && pr > p.v && pr - p.v < 3;
+          s += `<text class="val" x="${p.x}" y="${below ? p.y + 20 : p.y - 10}" text-anchor="middle">${fmt(p.v)}</text>`;
+        }
+      });
+      return s;
+    };
+    const hasPromo = mods.some(m => m.promo);
+    g += serie(mods.map(m => m.promo ? m.promo.moy : null), "var(--muted)", true, false);
+    g += serie(mods.map(moyModule), "var(--accent)", false, true);
+    return `
+      <div class="card">
+        <h2>Moyenne par module</h2>
+        <div class="legend"><span><i class="sw-line" style="border-color:var(--accent)"></i>Ma moyenne</span>${hasPromo ? '<span><i class="sw-line" style="border-color:var(--muted);border-top-style:dashed"></i>Moyenne de la promo</span>' : ""}</div>
+        <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Courbe des moyennes par module, sur 20">${g}</svg>
+        <p class="hint">Axe horizontal : les modules, dans l'ordre du portail (${mods.map(m => `${code(m)} = ${esc(m.nom)}`).join(", ")}). Axe vertical : la moyenne sur 20.</p>
+      </div>`;
+  }
+
+  function pieChart() {
+    let items = data.modules.map(m => ({ nom: m.nom, v: moyModule(m) })).filter(x => x.v != null);
+    if (!items.length) return `<div class="card"><h2>Répartition des moyennes</h2><p class="empty">Ajoute une note pour voir le graphique.</p></div>`;
+    if (items.length > PIE_SLOTS) {
+      const rest = items.slice(PIE_SLOTS - 1);
+      items = items.slice(0, PIE_SLOTS - 1).concat({ nom: `Autres (${rest.length} modules)`, v: rest.reduce((s, x) => s + x.v, 0) / rest.length, autres: true });
+    }
+    const total = items.reduce((s, x) => s + x.v, 0);
+    const cx = 150, cy = 150, r = 130, ri = 76;
+    const pt = (a, rad) => [cx + rad * Math.sin(a), cy - rad * Math.cos(a)];
+    let a0 = 0, g = "";
+    items.forEach((x, i) => {
+      const color = x.autres ? "var(--muted)" : `var(--s${i + 1})`;
+      const frac = x.v / total;
+      const tip = `<title>${esc(x.nom)} : ${fmt(x.v)}/20</title>`;
+      if (items.length === 1) {
+        g += `<circle cx="${cx}" cy="${cy}" r="${(r + ri) / 2}" fill="none" stroke="${color}" stroke-width="${r - ri}">${tip}</circle>`;
+      } else {
+        const a1 = a0 + frac * Math.PI * 2, big = a1 - a0 > Math.PI ? 1 : 0;
+        const [x0, y0] = pt(a0, r), [x1, y1] = pt(a1, r), [x2, y2] = pt(a1, ri), [x3, y3] = pt(a0, ri);
+        g += `<path d="M${x0},${y0}A${r},${r} 0 ${big} 1 ${x1},${y1}L${x2},${y2}A${ri},${ri} 0 ${big} 0 ${x3},${y3}Z" fill="${color}" stroke="var(--surface)" stroke-width="2">${tip}</path>`;
+        a0 = a1;
+      }
+    });
+    const gen = moyGenerale().v;
+    g += `<text x="${cx}" y="${cy - 4}" text-anchor="middle" style="font-size:30px;fill:var(--ink);font-weight:500">${fmt(gen)}</text>` +
+         `<text x="${cx}" y="${cy + 20}" text-anchor="middle" style="font-size:12px">moyenne /20</text>`;
+    const legend = items.map((x, i) => `<li><span class="sw" style="background:${x.autres ? "var(--muted)" : `var(--s${i + 1})`}"></span><span>${esc(x.nom)}</span><span class="v">${fmt(x.v)}</span></li>`).join("");
+    return `
+      <div class="card">
+        <h2>Répartition des moyennes</h2>
+        <p class="hint">Chaque part est proportionnelle à la moyenne du module (modules notés seulement).</p>
+        <div class="pie-wrap">
+          <svg viewBox="0 0 300 300" role="img" aria-label="Graphique circulaire des moyennes par module">${g}</svg>
+          <ul class="pie-legend">${legend}</ul>
+        </div>
+      </div>`;
+  }
+
+  function renderCharts() { return `<section>${lineChart()}${pieChart()}</section>`; }
+
+  // ---------- Rendu ----------
+  const view = document.getElementById("view");
+  function tab() { return location.hash === "#graphiques" ? "graphiques" : "notes"; }
+  function render(focusId) {
+    renderHead();
+    const t = tab();
+    ["notes", "graphiques"].forEach(n => {
+      const a = document.getElementById("tab-" + n);
+      if (n === t) a.setAttribute("aria-current", "page"); else a.removeAttribute("aria-current");
+    });
+    view.innerHTML = t === "notes" ? renderNotes() : renderCharts();
+    if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); if (el.select) el.select(); } }
+  }
+  const setMsg = (text, err = false, undo = false) => { message = { text, err, undo }; };
+
+  view.addEventListener("submit", e => {
+    if (e.target.id !== "form-add") return;
+    e.preventDefault();
+    const mi = +document.getElementById("add-module").value;
+    const t = document.getElementById("add-titre").value.trim() || "Note";
+    const n = parse(document.getElementById("add-note").value);
+    const sur = parse(document.getElementById("add-sur").value);
+    const coef = parse(document.getElementById("add-coef").value);
+    dernierModule = mi;
+    if (n == null) { setMsg("Entre une note, par exemple 14,5.", true); return render("add-note"); }
+    if (!sur || sur <= 0) { setMsg("Le barème doit être un nombre positif, par exemple 20.", true); return render("add-sur"); }
+    if (n < 0 || n > sur) { setMsg(`La note doit être comprise entre 0 et ${fmtN(sur)}.`, true); return render("add-note"); }
+    if (coef == null || coef <= 0) { setMsg("Le coefficient doit être un nombre positif, par exemple 1.", true); return render("add-coef"); }
+    data.modules[mi].notes.push({ t, n, sur, coef });
+    save();
+    setMsg(`Ajouté : ${fmtN(n)}/${fmtN(sur)} en ${data.modules[mi].nom}.`);
+    render("add-titre");
+  });
+
+  view.addEventListener("change", e => {
+    const el = e.target; if (!el.dataset || el.dataset.k == null) return;
+    const n = data.modules[+el.dataset.m].notes[+el.dataset.i];
+    const k = el.dataset.k;
+    if (k === "t") n.t = el.value.trim() || "Note";
+    else {
+      const v = parse(el.value);
+      const ok = v != null && (k === "n" ? v >= 0 && v <= n.sur : v > 0) && !(k === "sur" && v < n.n);
+      if (!ok) { setMsg(k === "n" ? `Note invalide : elle doit être entre 0 et ${fmtN(n.sur)}.` : "Valeur invalide : entre un nombre positif.", true); render(el.id); return; }
+      n[k] = v;
+    }
+    save(); setMsg("Modification enregistrée.");
+    setTimeout(() => render(document.activeElement && document.activeElement.id), 0);
+  });
+
+  view.addEventListener("click", e => {
+    const del = e.target.closest("[data-del]");
+    if (del) {
+      const [mi, i] = del.dataset.del.split("-").map(Number);
+      const [n] = data.modules[mi].notes.splice(i, 1);
+      dernierSupprime = { mi, i, n };
+      save(); setMsg(`Note supprimée : ${n.t} (${data.modules[mi].nom}).`, false, true); render("undo");
+      return;
+    }
+    if (e.target.id === "undo" && dernierSupprime) {
+      const { mi, i, n } = dernierSupprime; data.modules[mi].notes.splice(i, 0, n); dernierSupprime = null;
+      save(); setMsg("Suppression annulée."); render();
+      return;
+    }
+    if (e.target.id === "export") {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = "mes-notes.json"; document.body.appendChild(a); a.click(); a.remove();
+      setMsg("Fichier mes-notes.json téléchargé."); render(); return;
+    }
+    if (e.target.id === "import") { document.getElementById("import-file").click(); return; }
+    if (e.target.id === "reset") {
+      if (!confirmReset) { confirmReset = true; render("reset"); setTimeout(() => { if (confirmReset) { confirmReset = false; if (tab() === "notes") render(); } }, 5000); return; }
+      confirmReset = false; data = copie(DEFAUT); save(); setMsg("Notes remises comme sur le bulletin."); render(); return;
+    }
+  });
+
+  view.addEventListener("change", e => {
+    if (e.target.id !== "import-file" || !e.target.files[0]) return;
+    const r = new FileReader();
+    r.onload = () => {
+      try {
+        const d = JSON.parse(r.result);
+        if (!Array.isArray(d.modules)) throw new Error();
+        data = d; save(); setMsg("Notes importées.");
+      } catch (err) { setMsg("Ce fichier n'est pas un export de ce site (mes-notes.json).", true); }
+      render();
+    };
+    r.readAsText(e.target.files[0]);
+  });
+
+  window.addEventListener("hashchange", () => render());
+  render();
+})();
+</script>
+</body>
+</html>
