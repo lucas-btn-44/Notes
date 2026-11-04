@@ -18,3 +18,9 @@ courbe et graphique circulaire.
 Calcul : chaque note est ramenée sur 20 ; la moyenne d'un module tient compte du
 coefficient de chaque note ; la moyenne générale tient compte du coefficient de
 chaque module (seuls les modules notés comptent).
+
+## Installer sur téléphone
+
+- Android (Chrome) : ouvrir le site, menu ⋮, « Installer l'application ».
+- iPhone (Safari) : bouton Partager, « Sur l'écran d'accueil ». Sur iPhone, l'application
+  installée a sa propre mémoire : utiliser Exporter / Importer pour y transférer les notes saisies dans Safari.
